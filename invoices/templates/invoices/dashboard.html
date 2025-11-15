@@ -1,0 +1,271 @@
+{% extends 'invoices/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+            {% if not user.is_staff %}
+            <div>
+                <a href="{% url 'add_participant' %}" class="btn btn-success me-2" style="background-color: #000000; border-color: #000000;">
+                    <i class="fas fa-user-plus me-1"></i>Register Participants
+                </a>
+                {% if invoices %}
+                    {% if latest_unpaid_invoice %}
+                    <a href="{% url 'invoice_detail' latest_unpaid_invoice.id %}" class="btn btn-primary">
+                        <i class="fas fa-file-invoice me-1"></i>View Unpaid Invoice
+                    </a>
+                    {% else %}
+                    <a href="{% url 'invoice_detail' latest_invoice.id %}" class="btn btn-primary">
+                        <i class="fas fa-file-invoice me-1"></i>View Invoice
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Payment Status Alert -->
+        {% if latest_invoice and latest_invoice.status == 'paid' and participants.exists %}
+        <div class="alert alert-warning mb-4">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>New Participants Added</h5>
+            <p class="mb-0">
+                You have added new participants after your payment was processed. 
+                A new invoice has been generated for additional participants.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white shadow-sm" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Total Participants</h5>
+                                <h2 class="card-text">{{ total_participants }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white shadow-sm" style="background-color: #000000;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Total Invoices</h5>
+                                <h2 class="card-text">{{ invoices.count }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-file-invoice fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white shadow-sm" style="background-color: #198754;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">
+                                    {% if unpaid_invoices_count > 1 %}
+                                    Total Due
+                                    {% else %}
+                                    Amount Due
+                                    {% endif %}
+                                </h5>
+                                <h2 class="card-text">KES {{ current_amount_due }}</h2>
+                                {% if unpaid_invoices_count == 0 %}
+                                <!--small class="card-text">All paid ✓</small-->
+                                {% elif unpaid_invoices_count > 1 %}
+                                <small class="card-text">{{ unpaid_invoices_count }} invoices</small>
+                                {% endif %}
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white shadow-sm" style="background-color: #6c757d;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="card-title">Unpaid Invoices</h5>
+                                <h2 class="card-text">{{ unpaid_invoices_count }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Status Alerts -->
+        {% if latest_invoice and latest_invoice.status == 'paid' %}
+        <div class="alert alert-success mb-4">
+            <h5 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Payment Received!</h5>
+            <p class="mb-0">Your payment has been confirmed. Thank you for registering for the Apay Summit!</p>
+            {% if latest_invoice.payment_date %}
+            <small class="mb-0">Payment Date: {{ latest_invoice.payment_date }}</small>
+            {% endif %}
+            {% if latest_invoice.payment_reference %}
+            <small class="mb-0 d-block">Reference: {{ latest_invoice.payment_reference }}</small>
+            {% endif %}
+        </div>
+        {% elif latest_invoice and latest_invoice.status == 'overdue' %}
+        <div class="alert alert-danger mb-4">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-circle me-2"></i>Payment Overdue</h5>
+            <p class="mb-0">Your payment is overdue. Please make payment as soon as possible.</p>
+        </div>
+        {% endif %}
+
+        {% if not user.is_staff %}
+          <!-- Recent Activity Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Participants Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Recent Participants</h5>
+                        <a href="{% url 'add_participant' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus me-1"></i>Add New
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if participants %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Date Added</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for participant in participants|slice:":5" %}
+                                    <tr>
+                                        <td>{{ participant.name }}</td>
+                                        <td>{{ participant.email }}</td>
+                                        <td>{{ participant.created_at|date:"M d" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if participants.count > 5 %}
+                        <div class="text-center">
+                            <small class="text-muted">and {{ participants.count|add:"-5" }} more participants</small>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No participants added yet.</p>
+                            <a href="{% url 'add_participant' %}" class="btn btn-danger">
+                                <i class="fas fa-user-plus me-1"></i>Add Your First Participant
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <!-- Recent Invoices -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Recent Invoices</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if invoices %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invoice in invoices|slice:":5" %}
+                                    <tr>
+                                        <td>{{ invoice.invoice_number|slice:":8" }}...</td>
+                                        <td>KES {{ invoice.total_amount }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if invoice.status == 'paid' %}bg-success
+                                                {% elif invoice.status == 'overdue' %}bg-danger
+                                                {% else %}bg-warning{% endif %}">
+                                                {{ invoice.status|title }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No invoices generated yet.</p>
+                            <p class="text-muted">Add participants to generate your first invoice.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Admin Quick Stats -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>System Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h3 class="text-primary">{{ total_users }}</h3>
+                                    <p class="text-muted">Total Users</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h3 class="text-success">{{ total_invoices }}</h3>
+                                    <p class="text-muted">Total Invoices</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h3 class="text-warning">{{ pending_invoices }}</h3>
+                                    <p class="text-muted">Pending Payments</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h3 class="text-info">{{ total_revenue }}</h3>
+                                    <p class="text-muted">Total Revenue</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

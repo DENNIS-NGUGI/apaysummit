@@ -1,0 +1,117 @@
+{% extends 'invoices/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Invoice Management</h2>
+            <a href="{% url 'admin:index' %}" class="btn btn-secondary">Back to Admin</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card border-dark mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" name="search" id="search" class="form-control" 
+                               placeholder="Search by invoice number, username, or reference..." 
+                               value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-danger w-100">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Invoices Table -->
+        <div class="card border-dark">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">All Invoices ({{ invoices.count }})</h5>
+            </div>
+            <div class="card-body">
+                {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>User</th>
+                                <th>Participants</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                                <th>Payment Info</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ invoice.invoice_number }}</strong>
+                                </td>
+                                <td>{{ invoice.user.username }}</td>
+                                <td>{{ invoice.participants.count }}</td>
+                                <td>KES {{ invoice.total_amount }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if invoice.status == 'paid' %}bg-success
+                                        {% elif invoice.status == 'overdue' %}bg-danger
+                                        {% elif invoice.status == 'pending' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ invoice.issue_date }}</td>
+                                <td>{{ invoice.due_date }}</td>
+                                <td>
+                                    {% if invoice.payment_date %}
+                                    <small>
+                                        Paid: {{ invoice.payment_date }}<br>
+                                        {% if invoice.payment_reference %}
+                                        Ref: {{ invoice.payment_reference }}
+                                        {% endif %}
+                                    </small>
+                                    {% else %}
+                                    <span class="text-muted">Not paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'admin_update_payment' invoice.id %}" class="btn btn-sm btn-primary">Update Payment</a>
+                                        <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-sm btn-info">View</a>
+                                        <a href="{% url 'download_invoice' invoice.id %}" class="btn btn-sm btn-success">PDF</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No invoices found matching your criteria.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'invoices/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card border-dark shadow-lg">
+            <div class="card-header text-center text-white" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+                <img src="{% static 'images/ictalogo.png' %}" alt="Apay Summit Logo" class="img-fluid mb-3" style="max-height: 60px;">
+                <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Register for Apay Summit</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Username - Full Row -->
+                    <div class="mb-4">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-1"></i>Username
+                        </label>
+                        <input type="text" name="username" class="form-control" id="username" 
+                               placeholder="Enter your username" required
+                               value="{{ form.username.value|default:'' }}">
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.username.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">3-150 characters. Letters, numbers, and underscores only.</div>
+                    </div>
+                    
+                    <!-- Email - Full Row -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email Address
+                        </label>
+                        <input type="email" name="email" class="form-control" id="email" 
+                               placeholder="Enter your email address" required
+                               value="{{ form.email.value|default:'' }}">
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.email.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">We'll never share your email with anyone else.</div>
+                    </div>
+                    
+                    <!-- Password 1 - Full Row -->
+                    <div class="mb-4">
+                        <label for="password1" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Password
+                        </label>
+                        <input type="password" name="password1" class="form-control" id="password1" 
+                               placeholder="Enter your password" required>
+                        {% if form.password1.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.password1.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if form.password1.help_text %}
+                        <div class="form-text">
+                            {{ form.password1.help_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password 2 - Full Row -->
+                    <div class="mb-4">
+                        <label for="password2" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Confirm Password
+                        </label>
+                        <input type="password" name="password2" class="form-control" id="password2" 
+                               placeholder="Confirm your password" required>
+                        {% if form.password2.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.password2.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if form.password2.help_text %}
+                        <div class="form-text">
+                            {{ form.password2.help_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Company Name - Full Row -->
+                    <div class="mb-4">
+                        <label for="company_name" class="form-label">
+                            <i class="fas fa-building me-1"></i>Company Name (Optional)
+                        </label>
+                        <input type="text" name="company_name" class="form-control" id="company_name" 
+                               placeholder="Enter your company name"
+                               value="{{ form.company_name.value|default:'' }}">
+                        {% if form.company_name.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.company_name.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Phone - Full Row -->
+                    <div class="mb-4">
+                        <label for="phone" class="form-label">
+                            <i class="fas fa-phone me-1"></i>Phone Number
+                        </label>
+                        <input type="text" name="phone" class="form-control" id="phone" 
+                               placeholder="Enter your phone number (e.g., 0712345678)"
+                               value="{{ form.phone.value|default:'' }}">
+                        {% if form.phone.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.phone.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Format: 0712345678 or +254712345678</div>
+                    </div>
+                    
+                    <!-- Address - Full Row -->
+                    <div class="mb-4">
+                        <label for="address" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>Address (Optional)
+                        </label>
+                        <textarea name="address" class="form-control" id="address" 
+                                  placeholder="Enter your address" rows="3">{{ form.address.value|default:'' }}</textarea>
+                        {% if form.address.errors %}
+                        <div class="text-danger small mt-2">
+                            {% for error in form.address.errors %}
+                            <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg py-3">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4 pt-4 border-top">
+                    <p class="text-muted mb-3">Already have an account?</p>
+                    <a href="{% url 'login' %}" class="btn btn-outline-success btn-lg" style="border-color: #000000; color: #000000;">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login Here
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+        font-size: 16px;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+        font-size: 18px;
+        width: 100%;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #b02a37 0%, #dc3545 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: none;
+        padding: 20px;
+    }
+    
+    /* Consistent spacing for all fields */
+    .mb-4 {
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Error message styling */
+    .text-danger small {
+        font-size: 0.875rem;
+    }
+    
+    /* Button styling */
+    .btn-outline-success:hover {
+        background-color: #000000;
+        color: white;
+    }
+</style>
+{% endblock %}

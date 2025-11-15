@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        .company-info { margin-bottom: 30px; }
+        .invoice-details { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .text-right { text-align: right; }
+        .total-section { margin-top: 20px; }
+        .footer { margin-top: 50px; font-size: 12px; border-top: 1px solid #333; padding-top: 20px; }
+        .logo { max-height: 80px; }
+        .bank-info { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .participants-table { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- Logo Section -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ logo_url }}" alt="Icta Logo" class="logo" style="height: 30px;">
+        </div>
+        <h1 style="color: #dc3545; margin-bottom: 10px;">INVOICE: {{ invoice.invoice_number }}</h1>
+    </div>
+
+    <div class="company-info">
+        <div style="float: left; width: 50%;">
+            <strong>From:</strong><br>
+            The ICT Authority<br>
+            Teleposta Towers, 12th Flr, Kenyatta Avenue<br>
+            P.O. Box 27150 - Nairobi, Kenya<br>
+            Email: Info@icta.go.ke<br>
+            Website: icta.go.ke<br>
+            KRA PIN: P051208676Z
+        </div>
+        <div style="float: right; width: 50%; text-align: right;">
+            <strong>To:</strong><br>
+            {{ invoice.user.username }}<br>
+            {% if invoice.user.userprofile.company_name %}
+            {{ invoice.user.userprofile.company_name }}<br>
+            {% endif %}
+            {% if invoice.user.userprofile.address %}
+            {{ invoice.user.userprofile.address }}<br>
+            {% endif %}
+            {{ invoice.user.email }}<br>
+            {% if invoice.user.userprofile.phone %}
+            {{ invoice.user.userprofile.phone }}
+            {% endif %}
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="invoice-details">
+        <div style="float: left;">
+            <strong>Issue Date:</strong> {{ invoice.issue_date }}<br>
+            <strong>Due Date:</strong> {{ invoice.due_date }}
+        </div>
+        <div style="float: right; text-align: right;">
+            <strong>Status:</strong> {{ invoice.status|title }}<br>
+            <strong>Participants:</strong> {{ invoice.participants.count }}
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price (KES)</th>
+                <th>Total (KES)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>KES {{ item.unit_price }}</td>
+                <td>KES {{ item.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section" style="float: right; width: 300px;">
+        <table>
+            <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td class="text-right">KES {{ invoice.subtotal }}</td>
+            </tr>
+            <tr>
+                <td><strong>Tax (VAT Exclusive):</strong></td>
+                <td class="text-right">KES {{ invoice.tax_amount }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Amount:</strong></td>
+                <td class="text-right">KES {{ invoice.total_amount }}</td>
+            </tr>
+        </table>
+    </div>
+    <div style="clear: both;"></div>
+
+    <!-- Participants List 
+    {% if invoice.participants.count > 0 %}
+    <div class="participants-table">
+        <h4>Registered Participants ({{ invoice.participants.count }})</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for participant in invoice.participants.all %}
+                <tr>
+                    <td>{{ participant.name }}</td>
+                    <td>{{ participant.email }}</td>
+                    <td>{{ participant.phone }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}-->
+
+    <div class="bank-info">
+        <h4>Payment Instructions</h4>
+        <p>
+            <strong>Account Name:</strong> ICT AUTHORITY CONNECTED KENYA SUMMIT<br>
+            <strong>Bank Name:</strong> KENYA COMMERCIAL BANK-KSHs<br>
+            <strong>Bank Branch:</strong> KIPANDE HOUSE<br>
+            <strong>Bank Account No:</strong> 1303722755<br>
+            <strong>SWIFT Code:</strong> KCBLKEN
+        </p>
+        <p><strong>Please include invoice number {{ invoice.invoice_number }} in payment reference.</strong></p>
+    </div>
+
+    {% if invoice.notes %}
+    <div style="margin-top: 30px;">
+        <strong>Notes:</strong><br>
+        {{ invoice.notes }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Thank you for registering for the Apay Summit!</p>
+        <p>
+            <strong>The ICT Authority</strong><br>
+            Teleposta Towers, 12th Flr, Kenyatta Avenue | P.O. Box 27150 - Nairobi, Kenya<br>
+            Email: Info@icta.go.ke | Website: icta.go.ke | KRA PIN: P051208676Z
+        </p>
+    </div>
+</body>
+</html>

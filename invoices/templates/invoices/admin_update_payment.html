@@ -1,0 +1,99 @@
+{% extends 'invoices/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-dark">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Update Payment Status - {{ invoice.invoice_number }}</h5>
+            </div>
+            <div class="card-body">
+                <!-- Invoice Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Invoice Details</h6>
+                        <p><strong>User:</strong> {{ invoice.user.username }}</p>
+                        <p><strong>Participants:</strong> {{ invoice.participants.count }}</p>
+                        <p><strong>Total Amount:</strong> KES {{ invoice.total_amount }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Current Status</h6>
+                        <p>
+                            <span class="badge 
+                                {% if invoice.status == 'paid' %}bg-success
+                                {% elif invoice.status == 'overdue' %}bg-danger
+                                {% elif invoice.status == 'pending' %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                {{ invoice.get_status_display }}
+                            </span>
+                        </p>
+                        {% if invoice.payment_date %}
+                        <p><strong>Payment Date:</strong> {{ invoice.payment_date }}</p>
+                        {% endif %}
+                        {% if invoice.payment_reference %}
+                        <p><strong>Reference:</strong> {{ invoice.payment_reference }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger">
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'admin_invoice_list' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Payment Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Participants List -->
+        {% if invoice.participants.count > 0 %}
+        <div class="card border-dark mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Registered Participants ({{ invoice.participants.count }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in invoice.participants.all %}
+                            <tr>
+                                <td>{{ participant.name }}</td>
+                                <td>{{ participant.email }}</td>
+                                <td>{{ participant.phone }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

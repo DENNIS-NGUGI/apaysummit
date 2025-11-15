@@ -1,0 +1,184 @@
+{% extends 'invoices/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-dark shadow-lg">
+            <div class="card-header text-center text-white" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+                <img src="{% static 'images/ictalogo.png' %}" alt="Apay Summit Logo" class="img-fluid mb-3" style="max-height: 60px;">
+                <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Login to Apay Summit</h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Success Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            <div class="d-flex align-items-center">
+                                {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                {% elif message.tags == 'warning' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% else %}
+                                <i class="fas fa-info-circle me-2"></i>
+                                {% endif %}
+                                <div>{{ message }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Error Message -->
+                {% if error %}
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <div>{{ error }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Email Not Verified Warning -->
+                {% if show_resend_option %}
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-envelope me-2"></i>Email Not Verified
+                    </h6>
+                    <p class="mb-2">Your email address <strong>{{ email }}</strong> has not been verified yet.</p>
+                    <p class="mb-3">Please check your inbox for the verification email we sent you.</p>
+                    <form method="post" action="{% url 'resend_verification' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="email" value="{{ email }}">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="fas fa-paper-plane me-1"></i>Resend Verification Email
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                
+                <!-- Login Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="username_or_email" class="form-label">
+                            <i class="fas fa-user me-1"></i>Username or Email
+                        </label>
+                        <input type="text" class="form-control" id="username_or_email" name="username_or_email" 
+                               placeholder="Enter your username or email address" required
+                               value="{{ request.POST.username_or_email }}">
+                        <div class="form-text">You can login with your username or email address</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Password
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Enter your password" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg py-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login to Your Account
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Registration Link -->
+                <div class="text-center mt-4 pt-4 border-top">
+                    <p class="text-muted mb-3">Don't have an account yet?</p>
+                    <a href="{% url 'register' %}" class="btn btn-outline-success btn-lg" style="border-color: #000000; color: #000000;">
+                        <i class="fas fa-user-plus me-2"></i>Create New Account
+                    </a>
+                </div>
+
+                <!-- Resend Verification Link -->
+                <div class="text-center mt-3">
+                    <a href="{% url 'resend_verification' %}" class="text-muted small">
+                        <i class="fas fa-envelope me-1"></i>Didn't receive verification email?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+        font-size: 16px;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+        font-size: 18px;
+        width: 100%;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #b02a37 0%, #dc3545 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: none;
+        padding: 20px;
+    }
+    
+    /* Consistent spacing */
+    .mb-4 {
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Alert styling */
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    /* Button hover effects */
+    .btn-outline-success:hover {
+        background-color: #000000;
+        color: white;
+        border-color: #000000;
+    }
+    
+    /* Security icons */
+    .fa-shield-alt, .fa-lock, .fa-check-circle {
+        font-size: 1.1em;
+    }
+</style>
+{% endblock %}

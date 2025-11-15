@@ -1,0 +1,149 @@
+{% extends 'invoices/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Register Participants for Apay Summit</h2>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <!-- Tabs for Single vs Multiple Registration -->
+        <ul class="nav nav-tabs mb-4" id="participantTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single" type="button" role="tab" aria-controls="single" aria-selected="true">
+                    Single Participant
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="multiple-tab" data-bs-toggle="tab" data-bs-target="#multiple" type="button" role="tab" aria-controls="multiple" aria-selected="false">
+                    Multiple Participants
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="participantTabsContent">
+            <!-- Single Participant Tab -->
+            <div class="tab-pane fade show active" id="single" role="tabpanel" aria-labelledby="single-tab">
+                <div class="card border-dark">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Add Single Participant</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            {% for field in single_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                <div class="text-danger">
+                                    {{ field.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" name="single_submit" class="btn btn-danger btn-lg">Add Participant</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multiple Participants Tab -->
+            <div class="tab-pane fade" id="multiple" role="tabpanel" aria-labelledby="multiple-tab">
+                <div class="card border-dark">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Add Multiple Participants</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Instructions:</strong> Enter participant details in the format below (one participant per line):
+                            <br><br>
+                            <code>Full Name,Email Address,Phone Number</code>
+                            <br><br>
+                            <strong>Example:</strong>
+                            <br>
+                            <code>John Doe,john@example.com,0712345678</code><br>
+                            <code>Jane Smith,jane@example.com,0723456789</code>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            {% for field in multiple_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="text-danger">
+                                    {{ field.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" name="multiple_submit" class="btn btn-danger btn-lg">Add Multiple Participants</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Reminder -->
+        <div class="card border-primary mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Pricing Structure Reminder</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <h6>1-3 Participants</h6>
+                            <p class="h5 text-danger">KES 15,000 per person</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <h6>4 Participants</h6>
+                            <p class="h5 text-dark">KES 45,000 total</p>
+                            <small class="text-muted">(KES 11,250 per person)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <h6>5+ Participants</h6>
+                            <p class="h5 text-muted">KES 11,000 per person</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input, textarea, select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .nav-tabs .nav-link.active {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    .nav-tabs .nav-link {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
