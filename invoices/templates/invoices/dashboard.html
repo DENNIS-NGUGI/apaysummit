@@ -12,7 +12,7 @@
                 </a>
                 {% if invoices %}
                     {% if latest_unpaid_invoice %}
-                    <a href="{% url 'invoice_detail' latest_unpaid_invoice.id %}" class="btn btn-primary">
+                    <a href="{% url 'invoice_detail' latest_unpaid_invoice.id %}" class="btn btn-danger">
                         <i class="fas fa-file-invoice me-1"></i>View Unpaid Invoice
                     </a>
                     {% else %}

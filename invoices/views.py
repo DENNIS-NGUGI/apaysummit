@@ -395,7 +395,6 @@ def format_currency(value):
     except (ValueError, TypeError):
         return str(value)
     
-
 @login_required
 def download_invoice_pdf(request, invoice_id):
     # Allow staff users to download any invoice, regular users only their own
