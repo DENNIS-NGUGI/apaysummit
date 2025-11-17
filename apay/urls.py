@@ -17,9 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.conf.urls import handler404
+from invoices import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('dashboard')),
     path('invoices/', include('invoices.urls')),
 ]
+
+# Custom 404 handler
+handler404 = 'invoices.views.custom_404'

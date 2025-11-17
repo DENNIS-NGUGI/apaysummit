@@ -378,6 +378,24 @@ def invoice_detail(request, invoice_id):
         'can_add_participants': can_add_participants
     })
 
+def format_currency(value):
+    """Format currency with commas for PDF"""
+    try:
+        return "{:,.2f}".format(float(value))
+    except (ValueError, TypeError):
+        return str(value)
+
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
+
+def format_currency(value):
+    """Format currency with commas for PDF"""
+    try:
+        return "{:,.2f}".format(float(value))
+    except (ValueError, TypeError):
+        return str(value)
+    
+
 @login_required
 def download_invoice_pdf(request, invoice_id):
     # Allow staff users to download any invoice, regular users only their own
@@ -386,9 +404,20 @@ def download_invoice_pdf(request, invoice_id):
     else:
         invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
     
+    # Format currency amounts for PDF WITHOUT overwriting originals
+    # Add formatted versions as new attributes
+    invoice.subtotal_formatted = format_currency(invoice.subtotal)
+    invoice.tax_amount_formatted = format_currency(invoice.tax_amount)
+    invoice.total_amount_formatted = format_currency(invoice.total_amount)
+
+    # Format items without overwriting originals
+    for item in invoice.items.all():
+        item.unit_price_formatted = format_currency(item.unit_price)
+        item.total_formatted = format_currency(item.total)
     
+    # Logo URL    
     logo_url = "https://icta.go.ke//assets/images/ictalogo.png"  
-    
+
     # Render HTML template with logo URL
     html_string = render_to_string('invoices/invoice_pdf.html', {
         'invoice': invoice,
@@ -398,7 +427,7 @@ def download_invoice_pdf(request, invoice_id):
     # Create PDF using xhtml2pdf
     result = BytesIO()
     pdf = pisa.pisaDocument(BytesIO(html_string.encode("UTF-8")), result)
-    
+
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="invoice_{invoice.invoice_number}.pdf"'

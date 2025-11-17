@@ -1,5 +1,6 @@
 {% extends 'invoices/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="row">
@@ -45,7 +46,7 @@
             <div class="card-body">
                 <!-- Header with Logo -->
                 <div class="text-center mb-4">
-                    <img src="{% static 'invoices/images/logo.png' %}" alt="Apay Summit Logo" class="img-fluid mb-3" style="max-height: 80px;">
+                    <img src="{% static 'images/ictalogo.png' %}" alt="Apay Summit Logo" class="img-fluid mb-3" style="max-height: 80px;">
                     <h3 class="text-primary">INVOICE</h3>
                     <h4 class="text-muted">{{ invoice.invoice_number }}</h4>
                 </div>
@@ -129,28 +130,28 @@
                             <tr>
                                 <td>{{ item.description }}</td>
                                 <td>{{ item.quantity }}</td>
-                                <td>KES {{ item.unit_price }}</td>
-                                <td>KES {{ item.total }}</td>
+                                <td>{{ item.unit_price|ksh }}</td>
+                                <td>{{ item.total|ksh }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
                                 <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                <td><strong>KES {{ invoice.subtotal }}</strong></td>
+                                <td><strong>{{ invoice.subtotal|ksh }}</strong></td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-end"><strong>Tax (VAT Exclusive):</strong></td>
-                                <td><strong>KES {{ invoice.tax_amount }}</strong></td>
+                                <td><strong>{{ invoice.tax_amount|ksh }}</strong></td>
                             </tr>
                             <tr class="table-active">
                                 <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
-                                <td><strong>KES {{ invoice.total_amount }}</strong></td>
+                                <td><strong>{{ invoice.total_amount|ksh }}</strong></td>
                             </tr>
                             {% if invoice.status == 'paid' %}
                             <tr class="table-success">
                                 <td colspan="3" class="text-end"><strong>Amount Paid:</strong></td>
-                                <td><strong>KES {{ invoice.total_amount }}</strong></td>
+                                <td><strong>{{ invoice.total_amount|ksh }}</strong></td>
                             </tr>
                             <tr class="table-success">
                                 <td colspan="3" class="text-end"><strong>Balance Due:</strong></td>
@@ -168,22 +169,25 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-8">
-                                <p class="mb-2"><strong>Account Name:</strong> ICT AUTHORITY CONNECTED KENYA SUMMIT</p>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-university me-2"></i>Bank Transfer</h6>
+                                <p class="mb-2"><strong>Account Name:</strong> ICT AUTHORITY APAY SUMMIT</p>
                                 <p class="mb-2"><strong>Bank Name:</strong> KENYA COMMERCIAL BANK-KSHs</p>
                                 <p class="mb-2"><strong>Bank Branch:</strong> KIPANDE HOUSE</p>
                                 <p class="mb-2"><strong>Bank Account No:</strong> 1303722755</p>
                                 <p class="mb-0"><strong>SWIFT Code:</strong> KCBLKEN</p>
                             </div>
-                            <div class="col-md-4 text-end">
-                                <div class="alert alert-primary">
-                                    <strong>Reference:</strong><br>
-                                    {{ invoice.invoice_number }}
-                                </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-mobile-alt me-2"></i>Mobile Money</h6>
+                                <p class="mb-2"><strong>PayBill Number:</strong> 522522</p>
+                                <p class="mb-2"><strong>Account Number:</strong> 1303722755</p>
+                                <p class="mb-0 text-muted"><small>Go to M-Pesa → Lipa na M-Pesa → PayBill → Enter 522522 → Account 1303722755</small></p>
                             </div>
                         </div>
+                        
                         <div class="alert alert-dark mt-3" style="background-color: #000000; color: white;">
-                            <strong>Important:</strong> Please include invoice number <strong>{{ invoice.invoice_number }}</strong> in the payment reference.
+                            <strong><i class="fas fa-info-circle me-2"></i>Important:</strong> 
+                            Please include invoice number <strong>{{ invoice.invoice_number }}</strong> in the payment reference.
                         </div>
                     </div>
                 </div>
