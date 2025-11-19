@@ -5,6 +5,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import re
 from .models import UserProfile, Participant, Invoice
+import os
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -123,3 +124,65 @@ class AdminPaymentForm(forms.ModelForm):
             'payment_reference': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Transaction ID or Reference'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+class ProofOfPaymentForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = ['proof_of_payment', 'payment_method', 'payment_notes']
+        widgets = {
+            'payment_method': forms.Select(attrs={'class': 'form-control form-control-sm'}),
+            'payment_notes': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 2, 'placeholder': 'Enter payment reference or notes...'}),
+            'proof_of_payment': forms.FileInput(attrs={'class': 'form-control form-control-sm'}),
+        }
+    
+    def clean_proof_of_payment(self):
+        proof = self.cleaned_data.get('proof_of_payment')
+        if proof:
+            # Validate file type
+            valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif']
+            ext = os.path.splitext(proof.name)[1].lower()
+            if ext not in valid_extensions:
+                raise forms.ValidationError(
+                    'Unsupported file type. Please upload PDF or image files (PDF, JPG, PNG, GIF).'
+                )
+            
+            # Validate file size (5MB limit)
+            if proof.size > 5 * 1024 * 1024:
+                raise forms.ValidationError('File size must be less than 5MB.')
+        
+        return proof
+
+class AdminPaymentVerificationForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = ['status', 'payment_date', 'payment_reference']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'payment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'payment_reference': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter payment reference...'}),
+        }
+    class Meta:
+        model = Invoice
+        fields = ['proof_of_payment', 'payment_method', 'payment_notes']
+        widgets = {
+            'payment_method': forms.Select(attrs={'class': 'form-control form-control-sm'}),
+            'payment_notes': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 2, 'placeholder': 'Enter payment reference or notes...'}),
+            'proof_of_payment': forms.FileInput(attrs={'class': 'form-control form-control-sm'}),
+        }
+    
+    def clean_proof_of_payment(self):
+        proof = self.cleaned_data.get('proof_of_payment')
+        if proof:
+            # Validate file type
+            valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif']
+            ext = os.path.splitext(proof.name)[1].lower()
+            if ext not in valid_extensions:
+                raise forms.ValidationError(
+                    'Unsupported file type. Please upload PDF or image files (PDF, JPG, PNG, GIF).'
+                )
+            
+            # Validate file size (5MB limit)
+            if proof.size > 5 * 1024 * 1024:
+                raise forms.ValidationError('File size must be less than 5MB.')
+        
+        return proof

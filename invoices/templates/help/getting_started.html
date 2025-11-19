@@ -1,0 +1,216 @@
+{% extends 'invoices/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-play-circle me-2"></i>Getting Started Guide</h2>
+            <div>
+                <a href="{% url 'help_manual' %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Help
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Guide -->
+        <div class="card border-dark shadow-sm mb-4">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);">
+                <h4 class="mb-0"><i class="fas fa-list-ol me-2"></i>Step-by-Step Registration Process</h4>
+            </div>
+            <div class="card-body">
+                <!-- Step 1 -->
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-2 text-center">
+                        <div class="step-number-large">1</div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="text-danger">Register Your Participants</h4>
+                        <p class="lead">Add all individuals who will be attending the Apay Summit.</p>
+                        <ul>
+                            <li>Click on "Register Participants" from your dashboard</li>
+                            <li>Fill in participant details (name, email, phone)</li>
+                            <li>You can add multiple participants at once</li>
+                            <li>Participants will be automatically added to your current invoice</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <a href="{% url 'add_participant' %}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-user-plus me-1"></i>Add Participants
+                        </a>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Step 2 -->
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-2 text-center">
+                        <div class="step-number-large">2</div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="text-danger">Navigate to Invoices</h4>
+                        <p class="lead">View your generated invoice with all registered participants.</p>
+                        <ul>
+                            <li>Go to "My Invoices" from the main menu or dashboard</li>
+                            <li>View your invoice details and total amount</li>
+                            <li>Check the number of participants and pricing breakdown</li>
+                            <li>Download the PDF invoice for your records</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <a href="{% url 'invoices_list' %}" class="btn btn-danger btn-lg">
+                            <i class="fas fa-file-invoice me-1"></i>View Invoices
+                        </a>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Step 3 -->
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-2 text-center">
+                        <div class="step-number-large">3</div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="text-danger">Make Payment</h4>
+                        <p class="lead">Choose your preferred payment method and complete the transaction.</p>
+                        <ul>
+                            <li><strong>Bank Transfer:</strong> Use the provided bank details</li>
+                            <li><strong>Mobile Money:</strong> Use PayBill number 522522</li>
+                            <li>Always include your invoice number as reference</li>
+                            <li>Keep your payment confirmation/receipt</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <span class="badge bg-success fs-6 p-3">Payment Methods Available</span>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Step 4 -->
+                <div class="row align-items-center">
+                    <div class="col-md-2 text-center">
+                        <div class="step-number-large">4</div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="text-danger">Upload Proof of Payment</h4>
+                        <p class="lead">Submit evidence of your payment for verification.</p>
+                        <ul>
+                            <li>Go to your invoice details page</li>
+                            <li>Click "Upload Proof" button</li>
+                            <li>Select your payment proof file (PDF, JPG, PNG)</li>
+                            <li>Add payment method and reference notes</li>
+                            <li>Submit for admin verification</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <a href="{% url 'invoices_list' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-upload me-1"></i>Upload Proof
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-info shadow-sm h-100">
+                    <div class="card-header text-white bg-info">
+                        <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Pro Tips</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-users text-info me-3 fa-2x"></i>
+                            <div>
+                                <h6>Group Registration</h6>
+                                <p class="mb-0 text-muted">Register 4+ participants to get discounted rates per person.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-file-pdf text-info me-3 fa-2x"></i>
+                            <div>
+                                <h6>Save Your Invoice</h6>
+                                <p class="mb-0 text-muted">Always download and save your PDF invoice for records.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <i class="fas fa-clock text-info me-3 fa-2x"></i>
+                            <div>
+                                <h6>Early Payment</h6>
+                                <p class="mb-0 text-muted">Submit payments early to allow time for verification.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-warning shadow-sm h-100">
+                    <div class="card-header text-dark bg-warning">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-ban text-warning me-3 fa-2x"></i>
+                            <div>
+                                <h6>No Auto-Confirmation</h6>
+                                <p class="mb-0 text-muted">Payment status is manually verified by admin team.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-edit text-warning me-3 fa-2x"></i>
+                            <div>
+                                <h6>Invoice Locking</h6>
+                                <p class="mb-0 text-muted">Once paid, invoices are locked and cannot be modified.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <i class="fas fa-envelope text-warning me-3 fa-2x"></i>
+                            <div>
+                                <h6>Email Notifications</h6>
+                                <p class="mb-0 text-muted">You'll receive email updates on payment verification status.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="text-center mt-4">
+            <a href="{% url 'invoice_guide' %}" class="btn btn-primary btn-lg me-3">
+                Next: Invoice Guide <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+            <a href="{% url 'help_manual' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-life-ring me-1"></i>Back to Help Center
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-number-large {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0 auto;
+}
+
+.card {
+    border-radius: 10px;
+}
+</style>
+{% endblock %}

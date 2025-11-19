@@ -23,6 +23,27 @@
             </div>
         </div>
 
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    <div class="d-flex align-items-center">
+                        {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <!-- Admin Notice -->
         {% if user.is_staff and user != invoice.user %}
         <div class="alert alert-info mb-4">
@@ -91,9 +112,11 @@
                         <p><strong>Status:</strong> 
                             <span class="badge 
                                 {% if invoice.status == 'paid' %}bg-success
+                                {% elif invoice.status == 'under_review' %}bg-info
                                 {% elif invoice.status == 'overdue' %}bg-danger
+                                {% elif invoice.status == 'cancelled' %}bg-secondary
                                 {% else %}bg-danger{% endif %}">
-                                {{ invoice.status|title }}
+                                {{ invoice.get_status_display }}
                             </span>
                         </p>
                         <p><strong>Participants:</strong> {{ invoice.participants.count }}</p>
@@ -111,6 +134,18 @@
                     <p class="mb-1">Payment Reference: {{ invoice.payment_reference }}</p>
                     {% endif %}
                     <p class="mb-0">Thank you for your payment!</p>
+                </div>
+                {% endif %}
+
+                <!-- Under Review Alert -->
+                {% if invoice.status == 'under_review' %}
+                <div class="alert alert-info mt-3">
+                    <h6 class="alert-heading">Payment Under Review</h6>
+                    <p class="mb-0">
+                        <i class="fas fa-clock me-1"></i>
+                        Your proof of payment has been received and is being reviewed by our team. 
+                        You will be notified once the payment is verified.
+                    </p>
                 </div>
                 {% endif %}
 
@@ -189,6 +224,136 @@
                             <strong><i class="fas fa-info-circle me-2"></i>Important:</strong> 
                             Please include invoice number <strong>{{ invoice.invoice_number }}</strong> in the payment reference.
                         </div>
+                    </div>
+                </div>
+
+                <!-- Proof of Payment Section -->
+                <div class="card border-dark mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-receipt me-2"></i>
+                            Proof of Payment
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if invoice.status == 'paid' and invoice.proof_of_payment %}
+                            <!-- Show existing proof of payment -->
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle me-2"></i>Payment Verified</h6>
+                                <p class="mb-2">
+                                    <strong>Date Paid:</strong> {{ invoice.payment_date }}<br>
+                                    {% if invoice.payment_method %}
+                                    <strong>Method:</strong> {{ invoice.get_payment_method_display }}<br>
+                                    {% endif %}
+                                    {% if invoice.payment_notes %}
+                                    <strong>Notes:</strong> {{ invoice.payment_notes }}<br>
+                                    {% endif %}
+                                    {% if invoice.payment_reference %}
+                                    <strong>Reference:</strong> {{ invoice.payment_reference }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <a href="{{ invoice.proof_of_payment.url }}" 
+                                   target="_blank" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i>Download Proof
+                                </a>
+                            </div>
+                            
+                        {% elif invoice.status == 'under_review' and invoice.proof_of_payment %}
+                            <!-- Under review with proof uploaded -->
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-clock me-2"></i>Payment Under Review</h6>
+                                <p class="mb-2">
+                                    Your proof of payment has been uploaded and is being reviewed by our team.
+                                    {% if invoice.payment_method %}
+                                    <br><strong>Method:</strong> {{ invoice.get_payment_method_display }}
+                                    {% endif %}
+                                    {% if invoice.payment_notes %}
+                                    <br><strong>Notes:</strong> {{ invoice.payment_notes }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <a href="{{ invoice.proof_of_payment.url }}" 
+                                   target="_blank" 
+                                   class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-eye me-1"></i>View Uploaded Proof
+                                </a>
+                            </div>
+                            
+                        {% else %}
+                            <!-- Upload proof of payment form -->
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-info-circle me-2"></i>Pending Payment</h6>
+                                <p class="mb-0">Upload proof of payment after making the payment. Our team will verify it and update the status.</p>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Upload/Update Form -->
+                        {% if invoice.status == 'pending' or invoice.status == 'overdue' or invoice.proof_of_payment %}
+                        <div class="collapse {% if not invoice.proof_of_payment %}show{% endif %}" id="updateProofForm">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Proof of Payment File *</label>
+                                            {{ proof_form.proof_of_payment }}
+                                            {% if proof_form.proof_of_payment.errors %}
+                                                <div class="text-danger small">
+                                                    {{ proof_form.proof_of_payment.errors }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="form-text">
+                                                Supported: PDF, JPG, PNG, GIF (Max: 5MB)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Payment Method *</label>
+                                            {{ proof_form.payment_method }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Notes/Reference</label>
+                                    {{ proof_form.payment_notes }}
+                                    <div class="form-text">
+                                        Include transaction ID, reference number, or any payment details
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" name="upload_proof" class="btn btn-success w-100">
+                                    <i class="fas fa-upload me-1"></i>
+                                    {% if invoice.proof_of_payment %}Update{% else %}Upload{% endif %} Proof of Payment
+                                </button>
+                                
+                                <div class="mt-2 text-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        After uploading, our team will verify the payment and update the invoice status.
+                                    </small>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        {% if invoice.proof_of_payment and invoice.status != 'paid' %}
+                        <button class="btn btn-warning btn-sm w-100 mt-2" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#updateProofForm">
+                            <i class="fas fa-edit me-1"></i>Update Payment Details
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
 

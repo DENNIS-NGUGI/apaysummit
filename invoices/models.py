@@ -40,6 +40,7 @@ class Participant(models.Model):
 class Invoice(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending Payment'),
+        ('under_review', 'Under Review'),
         ('paid', 'Paid'),
         ('overdue', 'Overdue'),
         ('cancelled', 'Cancelled'),
@@ -57,6 +58,28 @@ class Invoice(models.Model):
     notes = models.TextField(blank=True)
     payment_date = models.DateField(null=True, blank=True)
     payment_reference = models.CharField(max_length=100, blank=True, help_text="Payment reference number or transaction ID")
+    
+    # Proof of payment fields
+    proof_of_payment = models.FileField(
+        upload_to='invoices/proof_of_payment/',
+        null=True,
+        blank=True,
+        verbose_name="Proof of Payment"
+    )
+    payment_method = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=[
+            ('bank_transfer', 'Bank Transfer'),
+            ('mobile_money', 'Mobile Money'),
+            ('credit_card', 'Credit Card'),
+            ('cash', 'Cash'),
+            ('other', 'Other')
+        ],
+        verbose_name="Payment Method"
+    )
+    payment_notes = models.TextField(blank=True, verbose_name="Payment Notes")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -92,7 +115,12 @@ class Invoice(models.Model):
     def is_editable(self):
         """Check if this invoice can be modified"""
         return self.status in ['pending', 'overdue']
-
+    
+    def save(self, *args, **kwargs):
+        # When proof of payment is uploaded, change status to 'under_review'
+        if self.proof_of_payment and self.status == 'pending':
+            self.status = 'under_review'
+        super().save(*args, **kwargs)
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, related_name='items', on_delete=models.CASCADE)

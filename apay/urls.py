@@ -19,6 +19,8 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.conf.urls import handler404
 from invoices import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,3 +30,7 @@ urlpatterns = [
 
 # Custom 404 handler
 handler404 = 'invoices.views.custom_404'
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -19,3 +19,11 @@ def ksh(value):
         return "KES {:,.2f}".format(value)
     except (ValueError, TypeError):
         return value
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
+@register.filter
+def get_field(form, field_name):
+    return form[field_name]

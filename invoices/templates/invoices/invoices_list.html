@@ -1,4 +1,5 @@
 {% extends 'invoices/base.html' %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="row">
@@ -76,6 +77,27 @@
             </div>
         </div>
 
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    <div class="d-flex align-items-center">
+                        {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <!-- Invoices Table -->
         <div class="card shadow-sm">
             <div class="card-header" style="background-color: #000000; color: white;">
@@ -113,12 +135,16 @@
                                 <td>{{ invoice.participants.count }}</td>
                                 <td>
                                     <span class="badge 
-                                        {% if invoice.status == 'paid' %}" style="background-color: #198754;"
-                                        {% elif invoice.status == 'overdue' %}" style="background-color: #dc3545;"
-                                        {% else %}" style="background-color: #ffc107; color: #000;"
-                                        {% endif %}>
-                                        {{ invoice.status|title }}
+                                        {% if invoice.status == 'paid' %}bg-success
+                                        {% elif invoice.status == 'under_review' %}bg-info
+                                        {% elif invoice.status == 'overdue' %}bg-danger
+                                        {% elif invoice.status == 'cancelled' %}bg-secondary
+                                        {% else %}bg-warning text-dark{% endif %}">
+                                        {{ invoice.get_status_display }}
                                     </span>
+                                    {% if invoice.proof_of_payment %}
+                                    <br><small class="text-muted"><i class="fas fa-file-upload"></i> Proof uploaded</small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <strong>KES {{ invoice.total_amount }}</strong>
@@ -131,7 +157,84 @@
                                         <a href="{% url 'download_invoice' invoice.id %}" class="btn btn-outline-success">
                                             <i class="fas fa-download"></i> PDF
                                         </a>
+                                        
+                                        <!-- Proof of Payment Upload Button -->
+                                        {% if invoice.status == 'pending' or invoice.status == 'overdue' %}
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#uploadProofModal{{ invoice.id }}">
+                                            <i class="fas fa-upload"></i> Pay
+                                        </button>
+                                        {% elif invoice.status == 'under_review' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-clock"></i> Under Review
+                                        </span>
+                                        {% endif %}
                                     </div>
+                                    
+                                    <!-- Proof of Payment Modal -->
+                                    {% if invoice.status == 'pending' or invoice.status == 'overdue' %}
+                                    <div class="modal fade" id="uploadProofModal{{ invoice.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); color: white;">
+                                                    <h5 class="modal-title">
+                                                        <i class="fas fa-upload me-2"></i>
+                                                        Upload Proof of Payment
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="post" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                                                    
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <p class="text-muted mb-3">
+                                                                Upload proof of payment for <strong>Invoice {{ invoice.invoice_number }}</strong>
+                                                                (Amount: <strong>KES {{ invoice.total_amount }}</strong>)
+                                                            </p>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Proof of Payment File *</label>
+                                                                {{ invoice_forms|get_item:invoice.id|get_field:'proof_of_payment' }}
+                                                                {% with invoice_forms|get_item:invoice.id as form %}
+                                                                    {% if form.proof_of_payment.errors %}
+                                                                        <div class="text-danger small">
+                                                                            {{ form.proof_of_payment.errors }}
+                                                                        </div>
+                                                                    {% endif %}
+                                                                {% endwith %}
+                                                                <div class="form-text">
+                                                                    Supported: PDF, JPG, PNG, GIF (Max: 5MB)
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Payment Method *</label>
+                                                                {{ invoice_forms|get_item:invoice.id|get_field:'payment_method' }}
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Payment Notes/Reference</label>
+                                                                {{ invoice_forms|get_item:invoice.id|get_field:'payment_notes' }}
+                                                                <div class="form-text">
+                                                                    Include transaction ID, reference number, or any payment details
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" name="upload_proof" class="btn btn-success">
+                                                            <i class="fas fa-upload me-1"></i>Upload Proof
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -143,9 +246,11 @@
                 <div class="mt-4">
                     <h6 class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Status Legend:</h6>
                     <div class="d-flex flex-wrap gap-3">
-                        <span class="badge" style="background-color: #198754;">Paid</span>
-                        <span class="badge" style="background-color: #ffc107; color: #000;">Pending</span>
-                        <span class="badge" style="background-color: #dc3545;">Overdue</span>
+                        <span class="badge bg-success">Paid</span>
+                        <span class="badge bg-info">Under Review</span>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        <span class="badge bg-danger">Overdue</span>
+                        <span class="badge bg-secondary">Cancelled</span>
                     </div>
                 </div>
                 {% else %}

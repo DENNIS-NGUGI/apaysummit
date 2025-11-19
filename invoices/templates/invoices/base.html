@@ -207,7 +207,7 @@
                  {% if user.is_authenticated %}
             <a class="navbar-brand" href="{% url 'dashboard' %}">
                 <!--img src="{% static 'images/ictalogo.png' %}" alt="Apay Summit Logo" class="logo me-2"-->
-                Apay Summit Registration
+                Apay Summit Gala Dinner Registration
             </a>
             <div class="navbar-nav ms-auto">
                 
@@ -241,7 +241,7 @@
                     <div class="row bg-white py-2 mb-2">
                     <img src="{% static 'images/ictalogo.png' %}" alt="Apay Summit Logo" class="logo">
                     </div>
-                    <h5>Apay Summit</h5>
+                    <h5>Apay Summit Gala Dinner</h5>
                     <span class="badge">
                         {% if user.is_staff %}
                         <i class="fas fa-shield-alt me-1"></i> Admin
@@ -280,7 +280,13 @@
                     <a class="nav-link {% if request.resolver_match.url_name == 'invoices_list' %}active{% endif %}" href="{% url 'invoices_list' %}">
                         <i class="fas fa-file-invoice"></i> My Invoices
                     </a>
+
+                    <a class="nav-link" href="{% url 'help_manual' %}">
+                        <i class="fas fa-life-ring me-1"></i>Help
+                    </a>
+
                     {% endif %}
+
                 </nav>
                 
                 <!-- User Info Section -->

@@ -16,6 +16,9 @@ from django.db import models
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
+from django.contrib import messages
+from .forms import ProofOfPaymentForm, AdminPaymentVerificationForm
+
 
 
 def register(request):
@@ -362,22 +365,6 @@ def add_participant(request):
     }
     return render(request, 'invoices/add_participant.html', context)
 
-@login_required
-def invoice_detail(request, invoice_id):
-    # Allow staff users to view any invoice, regular users only their own
-    if request.user.is_staff:
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-    else:
-        invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
-    
-    # Check if invoice can be modified
-    can_add_participants = invoice.can_add_participants()
-    
-    return render(request, 'invoices/invoice.html', {
-        'invoice': invoice,
-        'can_add_participants': can_add_participants
-    })
-
 def format_currency(value):
     """Format currency with commas for PDF"""
     try:
@@ -386,7 +373,7 @@ def format_currency(value):
         return str(value)
 
 def custom_404(request, exception):
-    return render(request, '404.html', status=404)
+    return render(request, 'invoices/404.html', status=404)
 
 def format_currency(value):
     """Format currency with commas for PDF"""
@@ -541,6 +528,54 @@ def participants_list(request):
     }
     return render(request, 'invoices/participants_list.html', context)
 
+@staff_member_required
+def admin_update_payment(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    
+    if request.method == 'POST':
+        form = AdminPaymentForm(request.POST, instance=invoice)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Payment status updated for invoice {invoice.invoice_number}')
+            return redirect('admin_invoice_list')
+    else:
+        form = AdminPaymentForm(instance=invoice)
+    
+    context = {
+        'form': form,
+        'invoice': invoice,
+    }
+    return render(request, 'invoices/admin_update_payment.html', context)
+
+@login_required
+def invoice_detail(request, invoice_id):
+    # Allow staff users to view any invoice, regular users only their own
+    if request.user.is_staff:
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+    else:
+        invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
+    
+    # Check if invoice can be modified
+    can_add_participants = invoice.can_add_participants()
+    
+    proof_form = ProofOfPaymentForm(instance=invoice)
+    
+    if request.method == 'POST' and 'upload_proof' in request.POST:
+        proof_form = ProofOfPaymentForm(request.POST, request.FILES, instance=invoice)
+        if proof_form.is_valid():
+            proof_form.save()
+            messages.success(request, 'Proof of payment uploaded successfully! Our team will review it shortly.')
+            return redirect('invoice_detail', invoice_id=invoice_id)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    
+    context = {
+        'invoice': invoice,
+        'can_add_participants': can_add_participants,
+        'proof_form': proof_form,
+    }
+    return render(request, 'invoices/invoice.html', context)
+
 @login_required
 def invoices_list(request):
     invoices = Invoice.objects.filter(user=request.user).order_by('-issue_date')
@@ -550,11 +585,30 @@ def invoices_list(request):
     unpaid_invoices = invoices.filter(status__in=['pending', 'overdue'])
     total_due = sum(invoice.total_amount for invoice in unpaid_invoices)
     
+    # Create forms for each invoice
+    invoice_forms = {}
+    for invoice in invoices:
+        invoice_forms[invoice.id] = ProofOfPaymentForm(instance=invoice)
+    
+    if request.method == 'POST' and 'upload_proof' in request.POST:
+        invoice_id = request.POST.get('invoice_id')
+        invoice = get_object_or_404(Invoice, id=invoice_id, user=request.user)
+        proof_form = ProofOfPaymentForm(request.POST, request.FILES, instance=invoice)
+        if proof_form.is_valid():
+            proof_form.save()
+            messages.success(request, f'Proof of payment uploaded for invoice {invoice.invoice_number}! Our team will review it shortly.')
+            return redirect('invoices_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+            # Update the form for this specific invoice
+            invoice_forms[invoice.id] = proof_form
+    
     context = {
         'invoices': invoices,
         'total_invoices': total_invoices,
         'unpaid_invoices_count': unpaid_invoices.count(),
         'total_due': total_due,
+        'invoice_forms': invoice_forms,
     }
     return render(request, 'invoices/invoices_list.html', context)
 
@@ -576,10 +630,28 @@ def admin_invoice_list(request):
             models.Q(payment_reference__icontains=search_query)
         )
     
+    # Create admin forms for each invoice
+    admin_forms = {}
+    for invoice in invoices:
+        admin_forms[invoice.id] = AdminPaymentVerificationForm(instance=invoice)
+    
+    if request.method == 'POST' and 'verify_payment' in request.POST:
+        invoice_id = request.POST.get('invoice_id')
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+        admin_form = AdminPaymentVerificationForm(request.POST, instance=invoice)
+        if admin_form.is_valid():
+            admin_form.save()
+            messages.success(request, f'Payment status updated for invoice {invoice.invoice_number}!')
+            return redirect('admin_invoice_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+            admin_forms[invoice.id] = admin_form
+    
     context = {
         'invoices': invoices,
         'status_filter': status_filter,
         'search_query': search_query,
+        'admin_forms': admin_forms,
     }
     return render(request, 'invoices/admin_invoice_list.html', context)
 
@@ -588,16 +660,36 @@ def admin_update_payment(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
     
     if request.method == 'POST':
-        form = AdminPaymentForm(request.POST, instance=invoice)
+        form = AdminPaymentVerificationForm(request.POST, instance=invoice)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Payment status updated for invoice {invoice.invoice_number}')
+            messages.success(request, f'Payment status updated for invoice {invoice.invoice_number}!')
             return redirect('admin_invoice_list')
     else:
-        form = AdminPaymentForm(instance=invoice)
+        form = AdminPaymentVerificationForm(instance=invoice)
     
     context = {
-        'form': form,
         'invoice': invoice,
+        'form': form,
     }
     return render(request, 'invoices/admin_update_payment.html', context)
+ 
+@login_required
+def help_manual(request):
+    """Main help manual page"""
+    return render(request, 'help/help_manual.html')
+
+@login_required
+def getting_started(request):
+    """Getting started guide"""
+    return render(request, 'help/getting_started.html')
+
+@login_required
+def invoice_guide(request):
+    """Invoice management guide"""
+    return render(request, 'help/invoice_guide.html')
+
+@login_required
+def payment_guide(request):
+    """Payment process guide"""
+    return render(request, 'help/payment_guide.html')
