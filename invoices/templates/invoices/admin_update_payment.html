@@ -22,6 +22,7 @@
                         <p>
                             <span class="badge 
                                 {% if invoice.status == 'paid' %}bg-success
+                                {% elif invoice.status == 'under_review' %}bg-info
                                 {% elif invoice.status == 'overdue' %}bg-danger
                                 {% elif invoice.status == 'pending' %}bg-warning
                                 {% else %}bg-secondary{% endif %}">
@@ -36,6 +37,33 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Proof of Payment Section -->
+                {% if invoice.proof_of_payment %}
+                <div class="card mb-4 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-file-upload"></i> Proof of Payment</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <a href="{{ invoice.proof_of_payment.url }}" target="_blank" class="btn btn-success btn-lg mb-3">
+                            <i class="fas fa-download"></i> Download Proof of Payment
+                        </a>
+                        <p class="text-muted mb-0">
+                            <small>File: {{ invoice.proof_of_payment.name }}</small>
+                        </p>
+                        {% if invoice.payment_method %}
+                        <p class="mt-2"><strong>Payment Method:</strong> {{ invoice.get_payment_method_display }}</p>
+                        {% endif %}
+                        {% if invoice.payment_notes %}
+                        <p class="mt-2"><strong>Payment Notes:</strong> {{ invoice.payment_notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> No proof of payment uploaded.
+                </div>
+                {% endif %}
 
                 <!-- Payment Form -->
                 <form method="post">

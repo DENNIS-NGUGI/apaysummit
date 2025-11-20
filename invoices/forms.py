@@ -161,15 +161,7 @@ class AdminPaymentVerificationForm(forms.ModelForm):
             'payment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'payment_reference': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter payment reference...'}),
         }
-    class Meta:
-        model = Invoice
-        fields = ['proof_of_payment', 'payment_method', 'payment_notes']
-        widgets = {
-            'payment_method': forms.Select(attrs={'class': 'form-control form-control-sm'}),
-            'payment_notes': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 2, 'placeholder': 'Enter payment reference or notes...'}),
-            'proof_of_payment': forms.FileInput(attrs={'class': 'form-control form-control-sm'}),
-        }
-    
+
     def clean_proof_of_payment(self):
         proof = self.cleaned_data.get('proof_of_payment')
         if proof:

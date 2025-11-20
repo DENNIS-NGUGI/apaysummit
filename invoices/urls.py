@@ -26,6 +26,7 @@ urlpatterns = [
     # Admin URLs
     path('admin/invoices/', views.admin_invoice_list, name='admin_invoice_list'),
     path('admin/invoice/<int:invoice_id>/update-payment/', views.admin_update_payment, name='admin_update_payment'),
+    path('admin/participants/', views.admin_participants_list, name='admin_participants_list'),
     
     # Reset URLs
     path('password-reset/', 

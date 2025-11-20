@@ -18,6 +18,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.contrib import messages
 from .forms import ProofOfPaymentForm, AdminPaymentVerificationForm
+import csv
 
 
 
@@ -665,6 +666,8 @@ def admin_update_payment(request, invoice_id):
             form.save()
             messages.success(request, f'Payment status updated for invoice {invoice.invoice_number}!')
             return redirect('admin_invoice_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = AdminPaymentVerificationForm(instance=invoice)
     
@@ -673,7 +676,7 @@ def admin_update_payment(request, invoice_id):
         'form': form,
     }
     return render(request, 'invoices/admin_update_payment.html', context)
- 
+
 @login_required
 def help_manual(request):
     """Main help manual page"""
@@ -693,3 +696,157 @@ def invoice_guide(request):
 def payment_guide(request):
     """Payment process guide"""
     return render(request, 'help/payment_guide.html')
+
+def export_participants_pdf(participants, user_summary, participant_invoices_map, total_paid_all_users, request_user):
+    """Export participants data to PDF"""
+    from io import BytesIO
+    from django.template.loader import render_to_string
+    from xhtml2pdf import pisa
+    
+    html_string = render_to_string('invoices/participants_pdf_report.html', {
+        'participants': participants,
+        'user_summary': user_summary,
+        'total_participants': len(participants),
+        'total_users': len(user_summary),
+        'total_paid_all_users': total_paid_all_users,  # NEW: Pass total paid amount
+        'report_date': timezone.now().strftime('%Y-%m-%d %H:%M'),
+        'generated_by': request_user,
+    })
+    
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html_string.encode("UTF-8")), result)
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="participants_report.pdf"'
+        return response
+    
+    return HttpResponse('Error generating PDF', status=500)
+
+
+def export_participants_csv(participants, participant_invoices_map, total_paid_all_users):
+    """Export participants data to CSV"""
+    import csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="participants_report.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Participant Name', 'Email', 'Phone', 'Registered By', 
+        'User Email', 'Invoice Count', 'Invoice Status', 'Total Amount',
+        'Paid Amount', 'Registration Date'  # ADDED: Paid Amount
+    ])
+    
+    for participant in participants:
+        user = participant.user
+        invoices = participant_invoices_map.get(participant.id, [])
+        invoice_count = len(invoices)
+        invoice_status = ", ".join([inv.get_status_display() for inv in invoices]) if invoices else "No Invoice"
+        total_amount = sum(inv.total_amount for inv in invoices) if invoices else 0
+        paid_amount = sum(inv.total_amount for inv in invoices if inv.status == 'paid') if invoices else 0  # NEW: Paid amount
+        
+        writer.writerow([
+            participant.name,
+            participant.email,
+            participant.phone,
+            user.username,
+            user.email,
+            invoice_count,
+            invoice_status,
+            total_amount,
+            paid_amount,  # NEW: Paid amount
+            participant.created_at.strftime('%Y-%m-%d')
+        ])
+    
+    # Add summary row
+    writer.writerow([])
+    writer.writerow(['SUMMARY', '', '', '', '', '', '', '', ''])
+    writer.writerow(['Total Participants', len(participants)])
+    writer.writerow(['Total Paid Amount (All Users)', f"KES {total_paid_all_users:,.2f}"])
+    
+    return response
+
+
+@staff_member_required
+def admin_participants_list(request):
+    # Get all participants with related user data
+    participants = Participant.objects.all().select_related('user')
+    
+    # Filtering
+    user_filter = request.GET.get('user', '')
+    if user_filter:
+        participants = participants.filter(user__username__icontains=user_filter)
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        participants = participants.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(email__icontains=search_query) |
+            models.Q(phone__icontains=search_query) |
+            models.Q(user__username__icontains=search_query)
+        )
+    
+    # Calculate statistics
+    total_participants = participants.count()
+    total_users = User.objects.filter(participants__isnull=False).distinct().count()
+    
+    # Get users with their paid invoices
+    users_with_counts = User.objects.filter(
+        participants__isnull=False
+    ).annotate(
+        participant_count=models.Count('participants')
+    ).distinct()
+    
+    user_summary = {}
+    for user in users_with_counts:
+        user_invoices = Invoice.objects.filter(user=user)
+        paid_invoices = user_invoices.filter(status='paid')
+        total_paid_amount = paid_invoices.aggregate(
+            total_paid=models.Sum('total_amount')
+        )['total_paid'] or 0
+        
+        user_summary[user.id] = {
+            'user': user,
+            'participant_count': user.participant_count,
+            'total_invoices': user_invoices.count(),
+            'paid_invoices': paid_invoices.count(),
+            'total_amount': user_invoices.aggregate(
+                total=models.Sum('total_amount')
+            )['total'] or 0,
+            'total_paid_amount': total_paid_amount,  # NEW: Total paid amount
+        }
+    
+    # Get invoices for each participant
+    all_invoices = Invoice.objects.prefetch_related('participants')
+    participant_invoices_map = {}
+    
+    for invoice in all_invoices:
+        for participant in invoice.participants.all():
+            if participant.id not in participant_invoices_map:
+                participant_invoices_map[participant.id] = []
+            participant_invoices_map[participant.id].append(invoice)
+    
+    # Add invoices to each participant for template use
+    for participant in participants:
+        participant.invoice_list = participant_invoices_map.get(participant.id, [])
+    
+    # Calculate total paid amount across all users
+    total_paid_all_users = sum(summary['total_paid_amount'] for summary in user_summary.values())
+    
+    # Export functionality
+    export_format = request.GET.get('export', '')
+    if export_format == 'csv':
+        return export_participants_csv(participants, participant_invoices_map, total_paid_all_users)
+    elif export_format == 'pdf':
+        return export_participants_pdf(participants, user_summary, participant_invoices_map, total_paid_all_users, request.user)
+    
+    context = {
+        'participants': participants,
+        'user_summary': user_summary,
+        'total_participants': total_participants,
+        'total_users': total_users,
+        'total_paid_all_users': total_paid_all_users,  # NEW: Total paid for all users
+        'user_filter': user_filter,
+        'search_query': search_query,
+    }
+    return render(request, 'invoices/admin_participants_list.html', context)
